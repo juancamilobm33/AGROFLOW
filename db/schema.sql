@@ -4,6 +4,9 @@ CREATE DATABASE IF NOT EXISTS agroflow_inventory
 
 USE agroflow_inventory;
 
+-- Elimina las tablas antiguas de inventario; los datos diarios se conservan.
+DROP TABLE IF EXISTS cerdas, gallinas, vacas;
+
 -- Cuentas utilizadas para iniciar sesión y relacionar registros.
 CREATE TABLE IF NOT EXISTS usuarios (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -27,15 +30,6 @@ INSERT IGNORE INTO usuarios (username, password_hash, role) VALUES
 );
 
 -- Apartado: Gallinas.
-CREATE TABLE IF NOT EXISTS gallinas (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    cantidad INT NOT NULL,
-    ubicacion VARCHAR(100) NOT NULL,
-    estado_salud VARCHAR(50) NOT NULL,
-    observaciones TEXT,
-    fecha_registro TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-) ENGINE=InnoDB;
-
 CREATE TABLE IF NOT EXISTS gallinas_diario (
     id INT AUTO_INCREMENT PRIMARY KEY,
     fecha DATE NOT NULL,
@@ -56,15 +50,6 @@ CREATE TABLE IF NOT EXISTS gallinas_diario (
 ) ENGINE=InnoDB;
 
 -- Apartado: Cerdas.
-CREATE TABLE IF NOT EXISTS cerdas (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    cantidad INT NOT NULL,
-    ubicacion VARCHAR(100) NOT NULL,
-    estado_salud VARCHAR(50) NOT NULL,
-    observaciones TEXT,
-    fecha_registro TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-) ENGINE=InnoDB;
-
 CREATE TABLE IF NOT EXISTS porcino_partos (
     id INT AUTO_INCREMENT PRIMARY KEY,
     id_cerda VARCHAR(30) NOT NULL,
@@ -85,15 +70,6 @@ CREATE TABLE IF NOT EXISTS porcino_partos (
 ) ENGINE=InnoDB;
 
 -- Apartado: Vacas.
-CREATE TABLE IF NOT EXISTS vacas (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    cantidad INT NOT NULL,
-    ubicacion VARCHAR(100) NOT NULL,
-    estado_salud VARCHAR(50) NOT NULL,
-    observaciones TEXT,
-    fecha_registro TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-) ENGINE=InnoDB;
-
 CREATE TABLE IF NOT EXISTS vacas_alimento_diario (
     id INT AUTO_INCREMENT PRIMARY KEY,
     fecha DATE NOT NULL,

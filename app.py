@@ -28,10 +28,6 @@ DB_CONFIG = {
     **BASE_DB_CONFIG,
     "database": os.environ.get("DB_NAME", "agroflow_inventory"),
 }
-
-
-
-CATEGORIAS = ["gallinas", "vacas", "cerdas"]
 ALIMENTOS = {"gallinas": "Gallinas", "cerdos": "Cerdas", "vacas": "Vacas"}
 ALERTA_ALIMENTO_KG = Decimal("15.000")
 
@@ -166,20 +162,6 @@ def init_db():
         CUENTAS_INICIALES,
     )
 
-    for tabla in CATEGORIAS:
-        cursor.execute(
-            f"""
-            CREATE TABLE IF NOT EXISTS {tabla} (
-                id INT AUTO_INCREMENT PRIMARY KEY,
-                cantidad INT NOT NULL,
-                ubicacion VARCHAR(100) NOT NULL,
-                estado_salud VARCHAR(50) NOT NULL,
-                observaciones TEXT,
-                fecha_registro TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            )
-            """
-        )
-
     cursor.execute(
         """
         CREATE TABLE IF NOT EXISTS plantas (
@@ -293,20 +275,6 @@ def init_db():
     conn.commit()
     cursor.close()
     conn.close()
-
-
-def get_table_data(tabla):
-    conn = get_db_connection()
-    cursor = conn.cursor(dictionary=True)
-    cursor.execute(f"SELECT * FROM {tabla} ORDER BY fecha_registro DESC")
-    data = cursor.fetchall()
-    cursor.close()
-    conn.close()
-    return data
-
-
-def total_cantidad(datos):
-    return sum(item["cantidad"] for item in datos)
 
 
 def get_porcine_data():
@@ -620,20 +588,9 @@ def index():
             editing_vaca_alimento_id = None
         nuevo_registro_vaca = request.args.get("nuevo_vaca") == "1"
 
-        data = {
-            "gallinas": get_table_data("gallinas"),
-            "vacas": get_table_data("vacas"),
-            "cerdas": get_table_data("cerdas"),
-        }
         plantas = get_plantas()
-        totals = {categoria: total_cantidad(data[categoria]) for categoria in CATEGORIAS}
-        total_general = sum(totals.values())
         return render_template(
             "index.html",
-            data=data,
-            totals=totals,
-            total_general=total_general,
-            categorias=CATEGORIAS,
             porcinos=get_porcine_data(),
             campos_porcinos=CAMPOS_PORCINOS,
             vista=vista,
@@ -655,34 +612,6 @@ def index():
         )
     except RuntimeError as exc:
         return f"<h2>Error de base de datos</h2><p>{exc}</p>", 500
-
-
-@app.route("/agregar", methods=["POST"])
-@login_required
-def agregar_registro():
-    categoria = request.form.get("categoria")
-    if categoria not in CATEGORIAS:
-        return "Categoría no válida", 400
-
-    cantidad = int(request.form.get("cantidad", 0))
-    ubicacion = request.form.get("ubicacion", "")
-    estado_salud = request.form.get("estado_salud", "Bueno")
-    observaciones = request.form.get("observaciones", "")
-
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute(
-        f"""
-        INSERT INTO {categoria} (cantidad, ubicacion, estado_salud, observaciones)
-        VALUES (%s, %s, %s, %s)
-        """,
-        (cantidad, ubicacion, estado_salud, observaciones),
-    )
-    conn.commit()
-    cursor.close()
-    conn.close()
-
-    return redirect(url_for("index"))
 
 
 @app.route("/plantas/agregar", methods=["POST"])
@@ -889,24 +818,7 @@ def eliminar_registro_porcino(clave, record_id):
     cursor.close()
     conn.close()
     return porcino_redirect()
-
-
-@app.route("/eliminar/<categoria>/<int:id>", methods=["POST"])
-@admin_required
-def eliminar_registro(categoria, id):
-    if categoria not in CATEGORIAS:
-        return "Categoría no válida", 400
-
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute(f"DELETE FROM {categoria} WHERE id = %s", (id,))
-    conn.commit()
-    cursor.close()
-    conn.close()
-
-    return redirect(url_for("index"))
-
-
 if __name__ == "__main__":
     init_db()
-    app.run(debug=True, host="0.0.0.0", port=5000)
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port)

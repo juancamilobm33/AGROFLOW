@@ -52,36 +52,12 @@
                   <p class="text-uppercase small text-muted mb-1">INSTITUCIÓN EDUCATIVA CARDENAL ANÍBAL MUÑOZ DUQUE</p>
                   <h1 class="h3 mb-0 fw-bold text-success">Una escuela transformadora para la vida</h1>
                 </div>
-                {% if data['gallinas'] or data['vacas'] or data['cerdas'] %}
-                <span class="badge bg-success-subtle text-success-emphasis px-3 py-2 rounded-pill fs-6">
-                  Total general: {{ total_general }}
-                </span>
-                {% endif %}
                 <img class="institution-crest" src="{{ url_for('static', filename='escudo-iecamd.jpg') }}" alt="Escudo de la Institución Educativa Cardenal Aníbal Muñoz Duque" />
               </div>
             </div>
           </div>
         </div>
       </div>
-
-      {% if data['gallinas'] or data['vacas'] or data['cerdas'] %}
-      <div class="row g-3 mb-4">
-        {% for categoria in categorias %}
-          {% if data[categoria] %}
-          <div class="col-md-4">
-            <div class="card border-0 shadow-sm rounded-4 h-100">
-              <div class="card-body">
-                <div class="d-flex justify-content-between align-items-center">
-                  <h2 class="h5 mb-0 text-capitalize">{{ categoria }}</h2>
-                  <span class="badge bg-light text-dark">{{ totals[categoria] }}</span>
-                </div>
-              </div>
-            </div>
-          </div>
-          {% endif %}
-        {% endfor %}
-      </div>
-      {% endif %}
 
       <div class="card shadow-sm border-0 rounded-4 mb-4">
         <div class="card-body">

@@ -1,0 +1,642 @@
+
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Institución Educativa Cardenal Aníbal Muñoz Duque | Inventario</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
+  </head>
+  <body>
+    <nav class="navbar navbar-dark bg-success shadow-sm">
+      <div class="container-fluid px-4 agro-navbar">
+        <a class="navbar-brand fw-bold institution-brand" href="{{ url_for('index', vista='gallinas') }}">INSTITUCIÓN EDUCATIVA CARDENAL ANÍBAL MUÑOZ DUQUE</a>
+        <div class="agro-nav-links">
+          <details class="animal-dropdown">
+            <summary>Animales</summary>
+            <div class="animal-options">
+              <a class="{% if vista == 'gallinas' %}active{% endif %}" href="{{ url_for('index', vista='gallinas') }}">Gallinas</a>
+              <a class="{% if vista == 'cerdos' %}active{% endif %}" href="{{ url_for('index', vista='cerdos') }}">Cerdas</a>
+              <a class="{% if vista == 'vacas' %}active{% endif %}" href="{{ url_for('index', vista='vacas') }}">Vacas</a>
+            </div>
+          </details>
+          <details class="animal-dropdown">
+            <summary>Alimento</summary>
+            <div class="animal-options">
+              {% for clave, nombre in alimentos.items() %}
+              <a class="{% if vista == 'alimento' and especie_alimento == clave %}active{% endif %}" href="{{ url_for('index', vista='alimento', especie=clave) }}">{{ nombre }}</a>
+              {% endfor %}
+            </div>
+          </details>
+          <a class="nav-link {% if vista == 'plantas' %}active{% endif %}" href="{{ url_for('index', vista='plantas') }}">Plantas</a>
+          {% if session.get('role') == 'admin' %}
+          <a class="nav-link" href="{{ url_for('admin_cuentas') }}">Cuentas</a>
+          {% endif %}
+          <span class="navbar-text">{{ session.get('username') }} · {{ 'Administrador' if session.get('role') == 'admin' else 'Estudiante' }}</span>
+          <form action="{{ url_for('logout') }}" method="post">
+            <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}" />
+            <button class="btn btn-outline-light btn-sm" type="submit">Cerrar sesión</button>
+          </form>
+        </div>
+      </div>
+    </nav>
+
+    <main class="container py-4">
+      <div class="row mb-4">
+        <div class="col-12">
+          <div class="card shadow-sm border-0 rounded-4">
+            <div class="card-body">
+              <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <div>
+                  <p class="text-uppercase small text-muted mb-1">INSTITUCIÓN EDUCATIVA CARDENAL ANÍBAL MUÑOZ DUQUE</p>
+                  <h1 class="h3 mb-0 fw-bold text-success">Una escuela transformadora para la vida</h1>
+                </div>
+                {% if data['gallinas'] or data['vacas'] or data['cerdas'] %}
+                <span class="badge bg-success-subtle text-success-emphasis px-3 py-2 rounded-pill fs-6">
+                  Total general: {{ total_general }}
+                </span>
+                {% endif %}
+                <img class="institution-crest" src="{{ url_for('static', filename='escudo-iecamd.jpg') }}" alt="Escudo de la Institución Educativa Cardenal Aníbal Muñoz Duque" />
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {% if data['gallinas'] or data['vacas'] or data['cerdas'] %}
+      <div class="row g-3 mb-4">
+        {% for categoria in categorias %}
+          {% if data[categoria] %}
+          <div class="col-md-4">
+            <div class="card border-0 shadow-sm rounded-4 h-100">
+              <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                  <h2 class="h5 mb-0 text-capitalize">{{ categoria }}</h2>
+                  <span class="badge bg-light text-dark">{{ totals[categoria] }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          {% endif %}
+        {% endfor %}
+      </div>
+      {% endif %}
+
+      <div class="card shadow-sm border-0 rounded-4 mb-4">
+        <div class="card-body">
+          {% if vista == 'gallinas' %}
+          <section id="gallinas">
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+              <h3 class="h4 mb-0">Registro diario de gallinas</h3>
+            </div>
+
+            <div class="chicken-actions mb-3">
+              <a class="btn btn-success btn-sm" href="{{ url_for('index', vista='gallinas', nuevo_gallina=1, _anchor='tabla-captura-gallinas') }}">Añadir registro</a>
+
+              {% if session.get('role') == 'admin' %}
+              <details class="chicken-action-details">
+                <summary class="btn btn-outline-success btn-sm">Editar registro</summary>
+                <form action="{{ url_for('index') }}" method="get" class="chicken-action-form chicken-select-form">
+                  <input type="hidden" name="vista" value="gallinas" />
+                  <input type="hidden" name="ver_gallinas" value="1" />
+                  <label class="form-label small" for="edit-hen-select">Selecciona el registro que quieres editar</label>
+                  <div class="d-flex gap-2 flex-wrap">
+                    <select class="form-select form-select-sm" id="edit-hen-select" name="editar_gallina" required>
+                      <option value="">Seleccionar por fecha</option>
+                      {% for item in gallinas_diario %}
+                      <option value="{{ item.id }}">{{ item.fecha }} · {{ item.aves_vivas }} aves vivas · Registro #{{ item.id }}</option>
+                      {% endfor %}
+                    </select>
+                    <button class="btn btn-outline-success btn-sm" type="submit">Editar seleccionado</button>
+                  </div>
+                </form>
+              </details>
+              {% endif %}
+
+              <a class="btn btn-outline-success btn-sm" href="{{ url_for('index', vista='gallinas', ver_gallinas=1, _anchor='historial-gallinas') }}">Ver historial</a>
+
+              {% if session.get('role') == 'admin' %}
+              <details class="chicken-action-details">
+                <summary class="btn btn-outline-danger btn-sm">Eliminar registro</summary>
+                <form action="{{ url_for('eliminar_registro_gallina') }}" method="post" class="chicken-action-form chicken-select-form">
+                  <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}" />
+                  <label class="form-label small" for="delete-hen-select">Selecciona el registro que quieres eliminar</label>
+                  <div class="d-flex gap-2 flex-wrap">
+                    <select class="form-select form-select-sm" id="delete-hen-select" name="record_id" required>
+                      <option value="">Seleccionar por fecha</option>
+                      {% for item in gallinas_diario %}
+                      <option value="{{ item.id }}">{{ item.fecha }} · {{ item.aves_vivas }} aves vivas · Registro #{{ item.id }}</option>
+                      {% endfor %}
+                    </select>
+                    <button class="btn btn-outline-danger btn-sm" type="submit">Eliminar seleccionado</button>
+                  </div>
+                </form>
+              </details>
+              {% endif %}
+            </div>
+
+            {% if nuevo_registro_gallina or editing_chicken_id %}
+            {% set registro_edicion = (gallinas_diario | selectattr('id', 'equalto', editing_chicken_id) | first) if editing_chicken_id else none %}
+            <div class="table-responsive">
+              <form action="{% if editing_chicken_id %}{{ url_for('editar_registro_gallina', record_id=editing_chicken_id) }}{% else %}{{ url_for('agregar_registro_gallina') }}{% endif %}" method="post">
+                <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}" />
+                <table class="table table-bordered table-striped align-middle small chicken-entry-table" id="tabla-captura-gallinas">
+                  <thead class="table-success">
+                    <tr>{% for field in campos_gallinas_diario %}<th>{{ field.label }}</th>{% endfor %}<th>Acción</th></tr>
+                  </thead>
+                  <tbody>
+                  <tr>
+                    {% for field in campos_gallinas_diario %}
+                    <td>
+                      {% if field.key == 'observaciones' %}
+                      <textarea class="form-control form-control-sm" name="{{ field.key }}" rows="2">{{ registro_edicion[field.key] if registro_edicion and registro_edicion[field.key] else '' }}</textarea>
+                      {% else %}
+                      <input class="form-control form-control-sm" name="{{ field.key }}" type="{{ field.type }}" value="{% if registro_edicion %}{{ registro_edicion[field.key] if registro_edicion[field.key] is not none else '' }}{% else %}{{ field.default if field.default is defined else '' }}{% endif %}" {% if field.step is defined %}step="{{ field.step }}"{% endif %} {% if field.min is defined %}min="{{ field.min }}"{% endif %} {% if field.required %}required{% endif %} />
+                      {% endif %}
+                    </td>
+                    {% endfor %}
+                    <td><button class="btn btn-success btn-sm" type="submit">{% if editing_chicken_id %}Guardar cambios{% else %}Guardar registro{% endif %}</button></td>
+                  </tr>
+                  </tbody>
+                </table>
+                <a class="btn btn-outline-secondary btn-sm" href="{{ url_for('index', vista='gallinas', _anchor='gallinas') }}">Cancelar</a>
+              </form>
+            </div>
+            {% endif %}
+
+            {% if ver_registros_gallina %}
+            <div id="historial-gallinas" class="mt-4">
+              <h4 class="h5 mb-3">Registros diarios guardados</h4>
+              <div class="table-responsive">
+                <table class="table table-bordered table-striped align-middle small">
+                  <thead class="table-success"><tr><th>ID</th>{% for field in campos_gallinas_diario %}<th>{{ field.label }}</th>{% endfor %}</tr></thead>
+                  <tbody>
+                    {% for item in gallinas_diario %}
+                    <tr>
+                      <td>{{ item.id }}</td>
+                      {% for field in campos_gallinas_diario %}
+                      <td>{{ item[field.key] if item[field.key] is not none and item[field.key] != '' else '—' }}</td>
+                      {% endfor %}
+                    </tr>
+                    {% else %}
+                    <tr><td colspan="{{ campos_gallinas_diario|length + 1 }}" class="text-center text-muted py-4">Todavía no hay registros diarios guardados.</td></tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+            {% endif %}
+          </section>
+          {% elif vista == 'plantas' %}
+          <section class="plants-page" id="plantas">
+            <header class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4">
+              <div>
+                <p class="small text-uppercase text-muted mb-1">Inventario de cultivos</p>
+                <h3 class="h4 mb-0">Plantas disponibles</h3>
+              </div>
+              {% if session.get('role') == 'admin' %}
+              <details class="plant-add-details">
+                <summary class="btn btn-success btn-sm">Agregar planta</summary>
+                <form action="{{ url_for('agregar_planta') }}" method="post" class="plant-add-form">
+                  <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}" />
+                  <label class="form-label" for="nombre-planta">Nombre de la planta</label>
+                  <div class="d-flex flex-wrap gap-2">
+                    <input class="form-control plant-name-input" id="nombre-planta" name="nombre" type="text" maxlength="100" placeholder="Ej. Tomate" required />
+                    <button class="btn btn-outline-success" type="submit">Guardar planta</button>
+                  </div>
+                </form>
+              </details>
+              {% endif %}
+            </header>
+
+            {% with messages = get_flashed_messages(with_categories=true) %}
+              {% for category, message in messages %}
+              <div class="alert alert-{{ category }}" role="alert">{{ message }}</div>
+              {% endfor %}
+            {% endwith %}
+
+            <div class="plant-grid">
+              {% for planta in plantas %}
+              <article class="plant-card">
+                <div class="plant-icon" aria-hidden="true">
+                  <svg viewBox="0 0 48 48" focusable="false">
+                    <path d="M24 42V23" />
+                    <path d="M24 28C13 28 8 22 8 12c10 0 16 5 16 16Z" />
+                    <path d="M24 22c0-10 6-16 16-16 0 10-6 16-16 16Z" />
+                    <path d="M15 43h18" />
+                  </svg>
+                </div>
+                <h4 class="plant-name">{{ planta.nombre }}</h4>
+                <p class="plant-registration-date mb-0">Registrada: {{ planta.fecha_registro.strftime('%d/%m/%Y %H:%M') if planta.fecha_registro else '—' }}</p>
+                {% if session.get('role') == 'admin' %}
+                <form action="{{ url_for('eliminar_planta', planta_id=planta.id) }}" method="post">
+                  <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}" />
+                  <button class="btn btn-outline-danger btn-sm" type="submit">Eliminar planta</button>
+                </form>
+                {% endif %}
+              </article>
+              {% else %}
+              <div class="plant-empty-state">
+                <span class="plant-empty-icon" aria-hidden="true">
+                  <svg viewBox="0 0 48 48" focusable="false">
+                    <path d="M24 42V23" />
+                    <path d="M24 28C13 28 8 22 8 12c10 0 16 5 16 16Z" />
+                    <path d="M24 22c0-10 6-16 16-16 0 10-6 16-16 16Z" />
+                    <path d="M15 43h18" />
+                  </svg>
+                </span>
+                <p class="mb-0">Aún no hay plantas registradas.{% if session.get('role') == 'admin' %} Agrega la primera para verla aquí.{% endif %}</p>
+              </div>
+              {% endfor %}
+            </div>
+
+            <section class="plant-history mt-4" aria-labelledby="plant-history-title">
+              <h4 class="h5 mb-3" id="plant-history-title">Historial de plantas registradas · {{ plantas|length }} registros</h4>
+              <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                  <thead><tr><th>Fecha de registro</th><th>Nombre de la planta</th></tr></thead>
+                  <tbody>
+                    {% for planta in plantas %}
+                    <tr>
+                      <td>{{ planta.fecha_registro.strftime('%d/%m/%Y %H:%M') if planta.fecha_registro else '—' }}</td>
+                      <td>{{ planta.nombre }}</td>
+                    </tr>
+                    {% else %}
+                    <tr><td colspan="2" class="empty-state">Aún no hay plantas registradas para mostrar en el historial.</td></tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            </section>
+          </section>
+          {% elif vista == 'cerdos' %}
+          <section id="porcinos">
+            <aside class="care-banner mb-4" aria-label="Parámetros de cuidado diario">
+              <div class="care-temperature"><span class="care-label">Cuidado porcino</span><strong>Temperatura 30 °C - 32 °C</strong></div>
+              <div><span class="care-dot hygiene"></span><strong>Higiene</strong><span>Mantener corrales y comederos limpios</span></div>
+              <div><span class="care-dot supervision"></span><strong>Supervisión constante</strong><span>Revisión diaria de los animales</span></div>
+            </aside>
+            <div class="mb-4">
+              <p class="small text-uppercase text-muted mb-1">Control porcino</p>
+              <h3 class="h4 mb-0">Registro de partos</h3>
+            </div>
+
+            <section class="farrowing-info" aria-label="Calendario de cuidado del lechón">
+              <div class="farrowing-info-heading">
+                <p class="small text-uppercase text-muted mb-1">Calendario de cuidado</p>
+                <h4 class="h5 mb-0">Atención de la camada</h4>
+              </div>
+              <ol class="farrowing-timeline">
+                <li><span class="timeline-day">Día 0 · Parto</span><span>Calostro durante las primeras 6 horas.</span></li>
+                <li><span class="timeline-day">Día 1</span><span>Corte de colmillos.</span></li>
+                <li><span class="timeline-day">Día 1</span><span>Inyección de hierro (2 cm).</span></li>
+                <li><span class="timeline-day">Días 4–5</span><span>Identificación de los lechones.</span></li>
+                <li><span class="timeline-day">Días 10–15</span><span>Introducción de concentrado.</span></li>
+                <li><span class="timeline-day">Día 14</span><span>Vacuna Mycoplasma.</span></li>
+                <li><span class="timeline-day">Días 21–28</span><span>Destete.</span></li>
+                <li><span class="timeline-day">Días 25–30</span><span>Desparasitación oral (Albenda20), según el peso.</span></li>
+              </ol>
+            </section>
+
+            <section class="feed-levante-info" aria-label="Ración de levante">
+              <div>
+                <p class="small text-uppercase mb-1">Levante · 2 meses</p>
+                <h4 class="h5 mb-1">Concentrado y mantenimiento</h4>
+                <p class="mb-0">500 g por lechón al día + 2 kg diarios para mantenimiento de la cerda.</p>
+              </div>
+              <div class="feed-example">
+                <strong>Ejemplo: 20 lechones</strong>
+                <span>20 × 0.5 kg = 10 kg</span>
+                <span>10 kg + 2 kg = 12 kg al día</span>
+                <span>Estimado para 60 días: 720 kg</span>
+              </div>
+            </section>
+
+            {% set clave = 'partos' %}
+            {% set campos = campos_porcinos[clave] %}
+            {% set add_form_id = 'add-partos' %}
+            <section class="porcine-section" aria-labelledby="title-partos">
+              <div class="section-heading">
+                <div>
+                  <h4 class="h5 mb-0" id="title-partos">Registro de partos y camadas</h4>
+                  <p class="text-muted small mb-0 mt-1">Los cálculos de alimento se estiman con 0.5 kg por lechón y 2 kg de mantenimiento al día.</p>
+                </div>
+                {% if nuevo_porcino != 'partos' %}
+                <a class="btn btn-success btn-sm" href="{{ url_for('index', vista='cerdos', nuevo_porcino='partos', _anchor='porcinos') }}">Agregar registro de parto</a>
+                {% endif %}
+              </div>
+
+              {% if nuevo_porcino == 'partos' %}
+              <div class="add-record-panel">
+                <form action="{{ url_for('agregar_registro_porcino', clave='partos') }}" method="post" class="row g-2 align-items-end">
+                  <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}" />
+                  {% for field in campos %}
+                  <div class="col-12 col-sm-6 col-xl-3">
+                    <label class="form-label small" for="{{ add_form_id }}-{{ field.key }}">{{ field.label }}</label>
+                    <input class="form-control form-control-sm {% if field.computed %}computed-field{% endif %}" id="{{ add_form_id }}-{{ field.key }}" name="{{ field.key }}" type="{{ field.type }}" value="{{ field.default if field.default is defined else '' }}" {% if field.step is defined %}step="{{ field.step }}"{% endif %} {% if field.min is defined %}min="{{ field.min }}"{% endif %} {% if field.required %}required{% endif %} {% if field.computed %}readonly{% endif %} />
+                  </div>
+                  {% endfor %}
+                  <div class="col-12 d-flex justify-content-end gap-2 pt-2">
+                    <a class="btn btn-outline-secondary btn-sm" href="{{ url_for('index', vista='cerdos', _anchor='porcinos') }}">Cancelar</a>
+                    <button class="btn btn-success btn-sm" type="submit">Guardar registro</button>
+                  </div>
+                </form>
+              </div>
+              {% endif %}
+
+              <section class="history-section mt-4" aria-labelledby="farrowing-history-title">
+                <h4 class="h5 mb-3" id="farrowing-history-title">Historial de partos y camadas · {{ porcinos[clave]|length }} registros</h4>
+              <div class="table-responsive porcine-table-wrap">
+                <table class="table table-hover align-middle mb-0">
+                  <thead><tr>{% for field in campos %}<th scope="col">{{ field.label }}</th>{% endfor %}<th scope="col">Concentrado lechones (kg/día)</th><th scope="col">Mantenimiento cerda (kg/día)</th><th scope="col">Total diario (kg)</th><th scope="col">Total 2 meses (kg)</th>{% if session.get('role') == 'admin' %}<th scope="col" class="actions-column">Acciones</th>{% endif %}</tr></thead>
+                  <tbody>
+                    {% for item in porcinos[clave] %}
+                    {% set row_form_id = 'edit-' ~ clave ~ '-' ~ item.id %}
+                    {% set is_editing = editing_key == clave and editing_id == item.id %}
+                    <tr>
+                      {% for field in campos %}
+                      <td>
+                        {% if is_editing %}
+                        <input class="form-control form-control-sm {% if field.computed %}computed-field{% endif %}" form="{{ row_form_id }}" name="{{ field.key }}" type="{{ field.type }}" value="{{ item[field.key] if item[field.key] is not none else (field.default if field.default is defined else '') }}" {% if field.step is defined %}step="{{ field.step }}"{% endif %} {% if field.min is defined %}min="{{ field.min }}"{% endif %} {% if field.required %}required{% endif %} {% if field.computed %}readonly{% endif %} />
+                        {% else %}
+                        {{ item[field.key] if item[field.key] is not none and item[field.key] != '' else '—' }}
+                        {% endif %}
+                      </td>
+                      {% endfor %}
+                      <td>{{ item.concentrado_lechones_kg }}</td>
+                      <td>{{ item.mantenimiento_cerda_kg }}</td>
+                      <td>{{ item.total_diario_kg }}</td>
+                      <td>{{ item.total_levante_2_meses_kg }}</td>
+                      {% if session.get('role') == 'admin' %}
+                      <td class="actions-cell">
+                        {% if is_editing %}
+                        <form id="{{ row_form_id }}" action="{{ url_for('editar_registro_porcino', clave=clave, record_id=item.id) }}" method="post"><input type="hidden" name="_csrf_token" value="{{ csrf_token() }}" /></form>
+                        <div class="row-actions">
+                          <button class="btn btn-success btn-sm" type="submit" form="{{ row_form_id }}">Guardar</button>
+                          <a class="btn btn-outline-secondary btn-sm" href="{{ url_for('index', vista='cerdos', _anchor='porcinos') }}">Cancelar</a>
+                        </div>
+                        {% else %}
+                        <div class="row-actions">
+                          <a class="btn btn-outline-success btn-sm" href="{{ url_for('index', vista='cerdos', editar=clave, id=item.id, _anchor='porcinos') }}">Editar</a>
+                          <form action="{{ url_for('eliminar_registro_porcino', clave=clave, record_id=item.id) }}" method="post">
+                            <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}" />
+                            <button class="btn btn-outline-danger btn-sm" type="submit">Eliminar</button>
+                          </form>
+                        </div>
+                        {% endif %}
+                      </td>
+                      {% endif %}
+                    </tr>
+                    {% else %}
+                    <tr><td colspan="{{ campos|length + 5 + (1 if session.get('role') == 'admin' else 0) }}" class="empty-state">Todavía no hay partos registrados.</td></tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+              </section>
+            </section>
+          </section>
+          {% elif vista == 'vacas' %}
+          <section id="vacas">
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+              <h3 class="h4 mb-0">Registro diario de vacas</h3>
+              <a class="btn btn-success btn-sm" href="{{ url_for('index', vista='vacas', nuevo_vaca=1, _anchor='vacas') }}">Añadir registro</a>
+            </div>
+
+            {% with messages = get_flashed_messages(with_categories=true) %}
+              {% for category, message in messages %}
+              <div class="alert alert-{{ category }}" role="alert">{{ message }}</div>
+              {% endfor %}
+            {% endwith %}
+
+            {% set consumo_vaca_edicion = (vacas_alimento_diario | selectattr('id', 'equalto', editing_vaca_alimento_id) | first) if editing_vaca_alimento_id else none %}
+            {% if nuevo_registro_vaca or editing_vaca_alimento_id %}
+            <div class="feed-entry-form mb-4">
+              <h4 class="h6">{% if editing_vaca_alimento_id %}Editar registro diario{% else %}Nuevo registro diario{% endif %}</h4>
+              <form action="{% if editing_vaca_alimento_id %}{{ url_for('editar_registro_diario_vaca', record_id=editing_vaca_alimento_id) }}{% else %}{{ url_for('agregar_registro_diario_vaca') }}{% endif %}" method="post" class="row g-3 align-items-end">
+                <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}" />
+                <div class="col-sm-6 col-lg-3">
+                  <label class="form-label" for="cow-daily-date">Fecha</label>
+                  <input class="form-control" id="cow-daily-date" name="fecha" type="date" value="{{ consumo_vaca_edicion.fecha if consumo_vaca_edicion else '' }}" required />
+                </div>
+                <div class="col-sm-6 col-lg-3">
+                  <label class="form-label" for="cow-daily-feed">Alimento suministrado total (kg)</label>
+                  <input class="form-control" id="cow-daily-feed" name="cantidad_kg" type="number" min="0.001" step="0.001" value="{{ consumo_vaca_edicion.cantidad_kg if consumo_vaca_edicion else '' }}" required />
+                </div>
+                <div class="col-sm-6 col-lg-3">
+                  <label class="form-label" for="cow-daily-milk">Leche recogida (litros)</label>
+                  <input class="form-control" id="cow-daily-milk" name="leche_litros" type="number" min="0" step="0.001" value="{{ consumo_vaca_edicion.leche_litros if consumo_vaca_edicion else '0' }}" required />
+                </div>
+                <div class="col-sm-6 col-lg-3">
+                  <label class="form-label" for="cow-daily-notes">Observaciones</label>
+                  <input class="form-control" id="cow-daily-notes" name="observaciones" type="text" value="{{ consumo_vaca_edicion.observaciones or '' if consumo_vaca_edicion else '' }}" />
+                </div>
+                <div class="col-12 d-flex justify-content-end gap-2">
+                  <a class="btn btn-outline-secondary btn-sm" href="{{ url_for('index', vista='vacas', _anchor='vacas') }}">Cancelar</a>
+                  <button class="btn btn-success btn-sm" type="submit">Guardar registro</button>
+                </div>
+              </form>
+            </div>
+            {% endif %}
+
+            <section class="history-section mt-4" aria-labelledby="cow-history-title">
+              <h4 class="h5 mb-3" id="cow-history-title">Historial diario de vacas · {{ vacas_alimento_diario|length }} registros</h4>
+            <div class="table-responsive">
+              <table class="table table-hover align-middle mb-0">
+                <thead>
+                  <tr><th>Fecha</th><th>Alimento suministrado total (kg)</th><th>Leche recogida (litros)</th><th>Observaciones</th>{% if session.get('role') == 'admin' %}<th>Acciones</th>{% endif %}</tr>
+                </thead>
+                <tbody>
+                  {% for item in vacas_alimento_diario %}
+                  <tr>
+                    <td>{{ item.fecha }}</td>
+                    <td>{{ item.cantidad_kg }}</td>
+                    <td>{{ item.leche_litros }}</td>
+                    <td>{{ item.observaciones or '—' }}</td>
+                    {% if session.get('role') == 'admin' %}
+                    <td>
+                      <div class="row-actions">
+                        <a class="btn btn-outline-success btn-sm" href="{{ url_for('index', vista='vacas', editar_consumo_vaca=item.id, _anchor='vacas') }}">Editar</a>
+                        <form action="{{ url_for('eliminar_registro_diario_vaca', record_id=item.id) }}" method="post">
+                          <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}" />
+                          <button class="btn btn-outline-danger btn-sm" type="submit">Eliminar</button>
+                        </form>
+                      </div>
+                    </td>
+                    {% endif %}
+                  </tr>
+                  {% else %}
+                  <tr><td colspan="{{ 5 if session.get('role') == 'admin' else 4 }}" class="empty-state">Todavía no hay registros diarios de vacas.</td></tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+            </section>
+          </section>
+          {% else %}
+          {% set resumen_alimento = alimento %}
+          <section class="feed-page" id="control-alimento">
+            <header class="feed-page-header">
+              <div>
+                <p class="small text-uppercase text-muted mb-1">Control de inventario</p>
+                <h2 class="h4 mb-1">Alimento para {{ alimentos[especie_alimento]|lower }}</h2>
+                {% if especie_alimento == 'gallinas' %}
+                <p class="text-muted mb-0">El consumo se descuenta de los registros diarios de gallinas.</p>
+                {% elif especie_alimento == 'cerdos' %}
+                <p class="text-muted mb-0">Consumo estimado desde cada parto: 0.5 kg por lechón + 2 kg de mantenimiento al día, durante un máximo de 60 días.</p>
+                {% else %}
+                <p class="text-muted mb-0">Registra aquí el consumo diario de alimento de las vacas.</p>
+                {% endif %}
+              </div>
+              <img class="institution-crest" src="{{ url_for('static', filename='escudo-iecamd.jpg') }}" alt="Escudo de la Institución Educativa Cardenal Aníbal Muñoz Duque" />
+            </header>
+
+            <nav class="feed-species-nav" aria-label="Tipo de alimento">
+              {% for clave, nombre in alimentos.items() %}
+              <a class="btn btn-sm {% if especie_alimento == clave %}btn-success{% else %}btn-outline-success{% endif %}" href="{{ url_for('index', vista='alimento', especie=clave) }}">{{ nombre }}</a>
+              {% endfor %}
+            </nav>
+
+            {% with messages = get_flashed_messages(with_categories=true) %}
+              {% for category, message in messages %}
+              <div class="alert alert-{{ category }}" role="alert">{{ message }}</div>
+              {% endfor %}
+            {% endwith %}
+
+            {% if resumen_alimento.tiene_movimientos %}
+            <div class="feed-stock-grid">
+              <div class="feed-stock-metric"><span>Comprado</span><strong>{{ '%.2f'|format(resumen_alimento.comprado) }} kg</strong></div>
+              <div class="feed-stock-metric"><span>Suministrado</span><strong>{{ '%.2f'|format(resumen_alimento.consumido) }} kg</strong></div>
+              <div class="feed-stock-metric feed-stock-available"><span>Disponible</span><strong>{{ '%.2f'|format(resumen_alimento.disponible) }} kg</strong></div>
+            </div>
+            {% endif %}
+
+            {% if resumen_alimento.alerta %}
+              {% if resumen_alimento.disponible <= 10 %}
+              <div class="alert alert-danger feed-alert" role="alert"><strong>Compra urgente:</strong> quedan {{ '%.2f'|format(resumen_alimento.disponible) }} kg de alimento para {{ alimentos[especie_alimento]|lower }}.</div>
+              {% else %}
+              <div class="alert alert-warning feed-alert" role="alert"><strong>Alimento bajo:</strong> quedan {{ '%.2f'|format(resumen_alimento.disponible) }} kg. Es momento de programar una compra.</div>
+              {% endif %}
+            {% elif not resumen_alimento.tiene_movimientos %}
+            <div class="alert alert-light border" role="status">No hay compras ni consumos registrados para esta especie.</div>
+            {% endif %}
+
+            {% if session.get('role') == 'admin' %}
+            <details class="feed-form-details mb-4">
+              <summary class="btn btn-success btn-sm">Registrar compra de alimento</summary>
+              <form action="{{ url_for('agregar_compra_alimento') }}" method="post" class="feed-entry-form">
+                <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}" />
+                <div class="row g-3 align-items-end">
+                  <div class="col-sm-4">
+                    <label class="form-label" for="feed-species">Animal</label>
+                    <select class="form-select" id="feed-species" name="especie" required>
+                      {% for clave, nombre in alimentos.items() %}
+                      <option value="{{ clave }}" {% if especie_alimento == clave %}selected{% endif %}>{{ nombre }}</option>
+                      {% endfor %}
+                    </select>
+                  </div>
+                  <div class="col-sm-4">
+                    <label class="form-label" for="feed-quantity">Cantidad comprada (kg)</label>
+                    <input class="form-control" id="feed-quantity" name="cantidad_kg" type="number" min="0.001" step="0.001" required />
+                  </div>
+                  <div class="col-sm-4">
+                    <label class="form-label" for="feed-date">Fecha de compra</label>
+                    <input class="form-control" id="feed-date" name="fecha_compra" type="date" required />
+                  </div>
+                  <div class="col-sm-4">
+                    <label class="form-label" for="feed-notes">Observaciones</label>
+                    <input class="form-control" id="feed-notes" name="observaciones" type="text" />
+                  </div>
+                  <div class="col-12 d-flex justify-content-end">
+                    <button class="btn btn-success" type="submit">Guardar compra</button>
+                  </div>
+                </div>
+              </form>
+            </details>
+            {% endif %}
+
+            {% if especie_alimento == 'vacas' %}
+              {% set consumo_vaca_edicion = (vacas_alimento_diario | selectattr('id', 'equalto', editing_vaca_alimento_id) | first) if editing_vaca_alimento_id else none %}
+              {% if editing_vaca_alimento_id %}
+              <div class="feed-entry-form mb-4">
+                <h3 class="h6">Editar consumo diario</h3>
+                <form action="{{ url_for('editar_consumo_alimento_vacas', record_id=editing_vaca_alimento_id) }}" method="post" class="row g-3 align-items-end">
+                  <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}" />
+                  <div class="col-sm-3"><label class="form-label" for="edit-cow-feed-date">Fecha</label><input class="form-control" id="edit-cow-feed-date" name="fecha" type="date" value="{{ consumo_vaca_edicion.fecha }}" required /></div>
+                  <div class="col-sm-3"><label class="form-label" for="edit-cow-feed-kg">Cantidad (kg)</label><input class="form-control" id="edit-cow-feed-kg" name="cantidad_kg" type="number" min="0.001" step="0.001" value="{{ consumo_vaca_edicion.cantidad_kg }}" required /></div>
+                  <div class="col-sm-3"><label class="form-label" for="edit-cow-feed-milk">Leche recogida (litros)</label><input class="form-control" id="edit-cow-feed-milk" name="leche_litros" type="number" min="0" step="0.001" value="{{ consumo_vaca_edicion.leche_litros }}" required /></div>
+                  <div class="col-sm-3"><label class="form-label" for="edit-cow-feed-notes">Observaciones</label><input class="form-control" id="edit-cow-feed-notes" name="observaciones" value="{{ consumo_vaca_edicion.observaciones or '' }}" /></div>
+                  <div class="col-sm-3 d-flex gap-2"><button class="btn btn-success" type="submit">Guardar</button><a class="btn btn-outline-secondary" href="{{ url_for('index', vista='alimento', especie='vacas') }}">Cancelar</a></div>
+                </form>
+              </div>
+              {% else %}
+              <details class="feed-form-details mb-4">
+                <summary class="btn btn-outline-success btn-sm">Registrar consumo diario</summary>
+                <form action="{{ url_for('agregar_consumo_alimento_vacas') }}" method="post" class="feed-entry-form">
+                  <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}" />
+                  <div class="row g-3 align-items-end">
+                    <div class="col-sm-4"><label class="form-label" for="cow-feed-date">Fecha</label><input class="form-control" id="cow-feed-date" name="fecha" type="date" required /></div>
+                    <div class="col-sm-4"><label class="form-label" for="cow-feed-kg">Cantidad suministrada (kg)</label><input class="form-control" id="cow-feed-kg" name="cantidad_kg" type="number" min="0.001" step="0.001" required /></div>
+                    <div class="col-sm-4"><label class="form-label" for="cow-feed-milk">Leche recogida (litros)</label><input class="form-control" id="cow-feed-milk" name="leche_litros" type="number" min="0" step="0.001" value="0" required /></div>
+                    <div class="col-sm-4"><label class="form-label" for="cow-feed-notes">Observaciones</label><input class="form-control" id="cow-feed-notes" name="observaciones" type="text" /></div>
+                    <div class="col-12 d-flex justify-content-end"><button class="btn btn-success" type="submit">Guardar consumo</button></div>
+                  </div>
+                </form>
+              </details>
+              {% endif %}
+              <details class="history-details feed-history" open>
+                <summary>Historial diario de alimento y leche · {{ vacas_alimento_diario|length }} registros</summary>
+              <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                  <thead><tr><th>Fecha</th><th>Alimento suministrado (kg)</th><th>Leche recogida (litros)</th><th>Observaciones</th>{% if session.get('role') == 'admin' %}<th>Acciones</th>{% endif %}</tr></thead>
+                  <tbody>
+                    {% for item in vacas_alimento_diario %}
+                    <tr><td>{{ item.fecha }}</td><td>{{ item.cantidad_kg }}</td><td>{{ item.leche_litros }}</td><td>{{ item.observaciones or '—' }}</td>
+                      {% if session.get('role') == 'admin' %}<td><div class="row-actions"><a class="btn btn-outline-success btn-sm" href="{{ url_for('index', vista='alimento', especie='vacas', editar_consumo_vaca=item.id) }}">Editar</a><form action="{{ url_for('eliminar_consumo_alimento_vacas', record_id=item.id) }}" method="post"><input type="hidden" name="_csrf_token" value="{{ csrf_token() }}" /><button class="btn btn-outline-danger btn-sm" type="submit">Eliminar</button></form></div></td>{% endif %}
+                    </tr>
+                    {% else %}
+                    <tr><td colspan="{{ 5 if session.get('role') == 'admin' else 4 }}" class="empty-state">Todavía no hay consumos diarios registrados.</td></tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+              </details>
+            {% endif %}
+
+            <details class="history-details feed-purchases" open>
+              <summary>Historial de compras de alimento · {{ resumen_alimento.compras|length }} registros</summary>
+              <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                  <thead><tr><th>Fecha</th><th>Cantidad comprada (kg)</th><th>Observaciones</th>{% if session.get('role') == 'admin' %}<th>Acciones</th>{% endif %}</tr></thead>
+                  <tbody>
+                    {% for compra in resumen_alimento.compras %}
+                    <tr>
+                      <td>{{ compra.fecha_compra }}</td>
+                      <td>{{ compra.cantidad_kg }}</td>
+                      <td>{{ compra.observaciones or '—' }}</td>
+                      {% if session.get('role') == 'admin' %}
+                      <td>
+                        <form action="{{ url_for('eliminar_compra_alimento', record_id=compra.id) }}" method="post">
+                          <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}" />
+                          <input type="hidden" name="especie" value="{{ especie_alimento }}" />
+                          <button class="btn btn-outline-danger btn-sm" type="submit">Eliminar</button>
+                        </form>
+                      </td>
+                      {% endif %}
+                    </tr>
+                    {% else %}
+                    <tr><td colspan="{{ 4 if session.get('role') == 'admin' else 3 }}" class="empty-state">No hay compras registradas para esta especie.</td></tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            </details>
+          </section>
+          {% endif %}
+        </div>
+      </div>
+    </main>
+
+  </body>
+</html>

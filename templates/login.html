@@ -9,31 +9,74 @@
   </head>
   <body class="auth-page">
     <main class="auth-shell">
-      <section class="auth-panel">
-        <div class="auth-brand-header">
-          <p class="auth-eyebrow">INSTITUCIÓN EDUCATIVA CARDENAL ANÍBAL MUÑOZ DUQUE</p>
-          <img class="institution-crest" src="{{ url_for('static', filename='escudo-iecamd.jpg') }}" alt="Escudo de la Institución Educativa Cardenal Aníbal Muñoz Duque" />
-        </div>
-        <h1>Una escuela transformadora para la vida</h1>
-        <p class="auth-subtitle">Iniciar sesión</p>
+      <div class="auth-layout">
+        <aside class="auth-showcase">
+          <div class="auth-showcase-glow" aria-hidden="true"></div>
+          <div class="auth-school-mark">
+            <img class="institution-crest" src="{{ url_for('static', filename='escudo-iecamd.jpg') }}" alt="Escudo de la Institución Educativa Cardenal Aníbal Muñoz Duque" />
+            <span>AGROFLOW <span class="auth-school-mark-dot">•</span> IE CAMD</span>
+          </div>
+          <div class="auth-showcase-copy">
+            <p class="auth-eyebrow">INSTITUCIÓN EDUCATIVA</p>
+            <h1>Una escuela transformadora para la vida</h1>
+            <p>Un espacio para cuidar, aprender y hacer crecer nuestros proyectos agropecuarios.</p>
+          </div>
+          <div class="auth-illustration" aria-hidden="true">
+            <svg viewBox="0 0 360 250" focusable="false">
+              <circle class="auth-illustration-sun" cx="265" cy="58" r="30" />
+              <path class="auth-illustration-hill" d="M12 216c48-72 94-72 146 0 42-74 103-91 190-14v42H12Z" />
+              <path class="auth-illustration-ground" d="M12 220c75-25 168-17 336 3v21H12Z" />
+              <path class="auth-illustration-stem" d="M177 219c-2-45 2-82 14-119" />
+              <path class="auth-illustration-leaf" d="M184 151c-48 0-67-26-67-69 42 0 68 23 67 69Z" />
+              <path class="auth-illustration-leaf" d="M190 125c2-48 30-73 75-72 0 44-27 71-75 72Z" />
+              <path class="auth-illustration-leaf" d="M177 187c-39 1-57-19-60-54 35-1 57 17 60 54Z" />
+              <path class="auth-illustration-leaf" d="M196 184c4-37 25-55 61-53-3 34-24 53-61 53Z" />
+              <path class="auth-illustration-detail" d="M121 87c23 13 43 34 58 61m86-94c-28 18-51 40-72 68m-73 14c23 9 40 25 55 48m82-53c-23 11-43 27-60 49" />
+            </svg>
+          </div>
+          <div class="auth-showcase-footer">
+            <span class="auth-status-dot"></span>
+            <span>Gestión escolar con propósito</span>
+          </div>
+        </aside>
 
-        {% with messages = get_flashed_messages(with_categories=true) %}
-          {% for category, message in messages %}
-          <div class="alert alert-{{ category }}" role="alert">{{ message }}</div>
-          {% endfor %}
-        {% endwith %}
+        <section class="auth-panel">
+          <div class="auth-panel-heading">
+            <p class="auth-eyebrow">BIENVENIDO DE NUEVO</p>
+            <h2>Iniciar sesión</h2>
+            <p class="auth-subtitle">Ingresa tus datos para continuar al panel de Agroflow.</p>
+          </div>
 
-        <form action="{{ url_for('login') }}" method="post" class="auth-form">
-          <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}" />
-          <label for="username" class="form-label">Usuario</label>
-          <input class="form-control" id="username" name="username" type="text" autocomplete="username" required autofocus />
+          {% with messages = get_flashed_messages(with_categories=true) %}
+            {% for category, message in messages %}
+            <div class="alert alert-{{ category }}" role="alert">{{ message }}</div>
+            {% endfor %}
+          {% endwith %}
 
-          <label for="password" class="form-label mt-3">Contraseña</label>
-          <input class="form-control" id="password" name="password" type="password" autocomplete="current-password" required />
+          <form action="{{ url_for('login') }}" method="post" class="auth-form">
+            <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}" />
+            <label for="username" class="form-label">Usuario</label>
+            <div class="auth-input-wrap">
+              <span class="auth-input-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" focusable="false"><circle cx="12" cy="8" r="3.5" /><path d="M5 20c.5-3.5 2.8-5.3 7-5.3s6.5 1.8 7 5.3" /></svg>
+              </span>
+              <input class="form-control" id="username" name="username" type="text" autocomplete="username" placeholder="Escribe tu usuario" required autofocus />
+            </div>
 
-          <button class="btn btn-success w-100 mt-4" type="submit">Iniciar sesión</button>
-        </form>
-      </section>
+            <label for="password" class="form-label mt-3">Contraseña</label>
+            <div class="auth-input-wrap">
+              <span class="auth-input-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" focusable="false"><rect x="5" y="10" width="14" height="10" rx="2" /><path d="M8 10V7a4 4 0 0 1 8 0v3m-4 4v2" /></svg>
+              </span>
+              <input class="form-control" id="password" name="password" type="password" autocomplete="current-password" placeholder="Escribe tu contraseña" required />
+            </div>
+
+            <button class="btn btn-success w-100 auth-submit" type="submit">Entrar al panel <span aria-hidden="true">→</span></button>
+          </form>
+
+          <p class="auth-security-note"><span aria-hidden="true">●</span> Acceso seguro para la comunidad educativa</p>
+        </section>
+      </div>
     </main>
   </body>
 </html>

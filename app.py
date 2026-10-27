@@ -367,6 +367,21 @@ def alimento_redirect(especie):
     return redirect(url_for("index", vista="alimento", especie=especie, _anchor="control-alimento"))
 
 
+def make_dashboard_event(fecha, categoria, descripcion):
+    if hasattr(fecha, "strftime"):
+        fecha_visible = fecha.strftime("%d/%m/%Y")
+        fecha_orden = fecha.isoformat()
+    else:
+        fecha_visible = str(fecha or "Fecha no disponible")
+        fecha_orden = fecha_visible
+    return {
+        "fecha": fecha_visible,
+        "fecha_orden": fecha_orden,
+        "categoria": categoria,
+        "descripcion": descripcion,
+    }
+
+
 def guardar_consumo_vacas(record_id=None, vista="alimento"):
     fecha = request.form.get("fecha", "").strip()
     observaciones = request.form.get("observaciones", "").strip() or None
@@ -442,7 +457,7 @@ def porcino_redirect():
 @app.route("/login", methods=["GET", "POST"])
 def login():
     if session.get("user_id"):
-        return redirect(url_for("index"))
+        return redirect(url_for("index", vista="inicio"))
 
     try:
         init_db()
@@ -461,7 +476,7 @@ def login():
                 session["user_id"] = user["id"]
                 session["username"] = user["username"]
                 session["role"] = user["role"]
-                return redirect(url_for("index"))
+                return redirect(url_for("index", vista="inicio"))
 
             flash("Usuario o contraseña incorrectos.", "danger")
     except RuntimeError as exc:
@@ -550,9 +565,9 @@ def guardar_registro_porcino(clave, record_id=None):
 def index():
     try:
         init_db()
-        vista = request.args.get("vista", "gallinas")
-        if vista not in {"gallinas", "cerdos", "vacas", "plantas", "alimento"}:
-            vista = "gallinas"
+        vista = request.args.get("vista", "inicio")
+        if vista not in {"inicio", "gallinas", "cerdos", "vacas", "plantas", "alimento"}:
+            vista = "inicio"
 
         especie_alimento = request.args.get("especie", "gallinas")
         if especie_alimento not in ALIMENTOS:
@@ -589,9 +604,46 @@ def index():
         nuevo_registro_vaca = request.args.get("nuevo_vaca") == "1"
 
         plantas = get_plantas()
+        porcinos = get_porcine_data()
+        actividad_reciente = []
+        if vista == "inicio":
+            actividad_reciente.extend(
+                make_dashboard_event(
+                    item["fecha"],
+                    "Gallinas",
+                    f"{item['huevos_recogidos']} huevos recogidos",
+                )
+                for item in gallinas_diario
+            )
+            actividad_reciente.extend(
+                make_dashboard_event(
+                    item["fecha_parto"],
+                    "Cerdas",
+                    f"Parto de {item['n_lechones']} lechones · Cerda {item['id_cerda']}",
+                )
+                for item in porcinos["partos"]
+            )
+            actividad_reciente.extend(
+                make_dashboard_event(
+                    item["fecha"],
+                    "Vacas",
+                    f"{item['leche_litros']} litros de leche · {item['cantidad_kg']} kg de alimento",
+                )
+                for item in vacas_alimento_diario
+            )
+            actividad_reciente.extend(
+                make_dashboard_event(
+                    item["fecha_registro"],
+                    "Plantas",
+                    f"Se añadió {item['nombre']}",
+                )
+                for item in plantas
+            )
+            actividad_reciente.sort(key=lambda item: item["fecha_orden"], reverse=True)
+
         return render_template(
             "index.html",
-            porcinos=get_porcine_data(),
+            porcinos=porcinos,
             campos_porcinos=CAMPOS_PORCINOS,
             vista=vista,
             editing_key=editing_key,
@@ -609,6 +661,13 @@ def index():
             vacas_alimento_diario=vacas_alimento_diario,
             editing_vaca_alimento_id=editing_vaca_alimento_id,
             nuevo_registro_vaca=nuevo_registro_vaca,
+            actividad_reciente=actividad_reciente[:8],
+            resumen_inicio={
+                "gallinas": len(gallinas_diario),
+                "cerdas": len(porcinos["partos"]),
+                "vacas": len(vacas_alimento_diario),
+                "plantas": len(plantas),
+            },
         )
     except RuntimeError as exc:
         return f"<h2>Error de base de datos</h2><p>{exc}</p>", 500

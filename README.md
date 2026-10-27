@@ -80,6 +80,7 @@ http://localhost:5000
 ## Funcionalidades
 
 - Inicio de sesión con roles de administrador y estudiante
+- Panel de inicio después de iniciar sesión, con resumen de registros y actividad reciente
 - El estudiante puede consultar y agregar registros, pero no editarlos ni eliminarlos
 - El administrador puede editar/eliminar registros y restablecer contraseñas desde Cuentas
 - Control de alimento en kg por especie; compras exclusivas del administrador y alertas al quedar 15 kg o menos

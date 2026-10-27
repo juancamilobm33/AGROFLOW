@@ -11,8 +11,9 @@
   <body>
     <nav class="navbar navbar-dark bg-success shadow-sm">
       <div class="container-fluid px-4 agro-navbar">
-        <a class="navbar-brand fw-bold institution-brand" href="{{ url_for('index', vista='gallinas') }}">INSTITUCIÓN EDUCATIVA CARDENAL ANÍBAL MUÑOZ DUQUE</a>
+        <a class="navbar-brand fw-bold institution-brand" href="{{ url_for('index', vista='inicio') }}">INSTITUCIÓN EDUCATIVA CARDENAL ANÍBAL MUÑOZ DUQUE</a>
         <div class="agro-nav-links">
+          <a class="nav-link {% if vista == 'inicio' %}active{% endif %}" href="{{ url_for('index', vista='inicio') }}">Inicio</a>
           <details class="animal-dropdown">
             <summary>Animales</summary>
             <div class="animal-options">
@@ -61,7 +62,83 @@
 
       <div class="card shadow-sm border-0 rounded-4 mb-4">
         <div class="card-body">
-          {% if vista == 'gallinas' %}
+          {% if vista == 'inicio' %}
+          <section class="dashboard-home" aria-labelledby="dashboard-title">
+            <header class="dashboard-welcome mb-4">
+              <div>
+                <p class="dashboard-eyebrow mb-2">PANEL DE LA GRANJA</p>
+                <h2 class="h3 mb-2" id="dashboard-title">¡Bienvenido, {{ session.get('username') }}!</h2>
+                <p class="mb-0">Aquí puedes consultar rápidamente la actividad y los registros de la institución.</p>
+              </div>
+              <a class="btn btn-success" href="{{ url_for('index', vista='gallinas') }}">Ir a los registros</a>
+            </header>
+
+            <div class="dashboard-stats mb-4">
+              <a class="dashboard-stat" href="{{ url_for('index', vista='gallinas') }}">
+                <span class="dashboard-stat-icon" aria-hidden="true">G</span>
+                <span class="dashboard-stat-label">Registros de gallinas</span>
+                <strong>{{ resumen_inicio.gallinas }}</strong>
+              </a>
+              <a class="dashboard-stat" href="{{ url_for('index', vista='cerdos') }}">
+                <span class="dashboard-stat-icon" aria-hidden="true">C</span>
+                <span class="dashboard-stat-label">Partos de cerdas</span>
+                <strong>{{ resumen_inicio.cerdas }}</strong>
+              </a>
+              <a class="dashboard-stat" href="{{ url_for('index', vista='vacas') }}">
+                <span class="dashboard-stat-icon" aria-hidden="true">V</span>
+                <span class="dashboard-stat-label">Registros de vacas</span>
+                <strong>{{ resumen_inicio.vacas }}</strong>
+              </a>
+              <a class="dashboard-stat" href="{{ url_for('index', vista='plantas') }}">
+                <span class="dashboard-stat-icon" aria-hidden="true">P</span>
+                <span class="dashboard-stat-label">Plantas registradas</span>
+                <strong>{{ resumen_inicio.plantas }}</strong>
+              </a>
+            </div>
+
+            <div class="dashboard-bottom">
+              <section class="dashboard-activity" aria-labelledby="activity-title">
+                <div class="dashboard-section-heading">
+                  <div>
+                    <p class="small text-uppercase text-muted mb-1">Lo más reciente</p>
+                    <h3 class="h5 mb-0" id="activity-title">Actividad registrada</h3>
+                  </div>
+                  <span class="dashboard-activity-count">{{ actividad_reciente|length }} recientes</span>
+                </div>
+                <div class="activity-list">
+                  {% for item in actividad_reciente %}
+                  <article class="activity-item">
+                    <span class="activity-marker" aria-hidden="true"></span>
+                    <div class="activity-copy">
+                      <strong>{{ item.categoria }}</strong>
+                      <span>{{ item.descripcion }}</span>
+                    </div>
+                    <time class="activity-date">{{ item.fecha }}</time>
+                  </article>
+                  {% else %}
+                  <div class="dashboard-empty-state">
+                    <span class="dashboard-empty-mark" aria-hidden="true">+</span>
+                    <div>
+                      <strong>Aún no hay actividad registrada</strong>
+                      <p class="mb-0">Cuando agregues registros, aparecerán aquí con su fecha.</p>
+                    </div>
+                  </div>
+                  {% endfor %}
+                </div>
+              </section>
+
+              <aside class="dashboard-shortcuts" aria-labelledby="shortcuts-title">
+                <p class="small text-uppercase text-muted mb-1">Accesos rápidos</p>
+                <h3 class="h5 mb-3" id="shortcuts-title">¿Qué deseas consultar?</h3>
+                <a href="{{ url_for('index', vista='alimento') }}">Control de alimento <span aria-hidden="true">→</span></a>
+                <a href="{{ url_for('index', vista='plantas') }}">Plantas disponibles <span aria-hidden="true">→</span></a>
+                {% if session.get('role') == 'admin' %}
+                <a href="{{ url_for('admin_cuentas') }}">Administrar cuentas <span aria-hidden="true">→</span></a>
+                {% endif %}
+              </aside>
+            </div>
+          </section>
+          {% elif vista == 'gallinas' %}
           <section id="gallinas">
             <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
               <h3 class="h4 mb-0">Registro diario de gallinas</h3>
